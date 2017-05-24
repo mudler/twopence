@@ -151,11 +151,14 @@ configuration of each guest that uses direct
 <interface> in the <devices> section similar to
 the following:
 
+```xml
    <interface type='network'>
      <source network='isolated'/>
-     <model type='virtio'/> <-- This line is
-optional.
+     <model type='virtio'/>
    </interface>
+```
+
+Note: model is optional
 
 * start the VM
 

@@ -119,19 +119,71 @@ $ ruby /usr/lib/twopence/test.rb
 $ /usr/lib/twopence/add_virtio_channel.sh mydomain
 ```
 
-* start the VM
-* copy the test server into the VM:
+* (optional) create an isolated network so you can reach your VM:
+  You can use the provided isolated.xml, or write your own:
+
+  <network>
+   <name>isolated</name>
+     <ip address='192.168.254.1'
+  netmask='255.255.255.0'>
+     <dhcp>
+       <range start='192.168.254.2'
+  end='192.168.254.254' />
+     </dhcp>
+   </ip>
+  </network>
+
+  (if the 192.168.254.0/24 network is already in use
+  elsewhere on your network, you can choose a
+  different network).
+
+* (optional) create the network, set it to autostart, and
+start it:
 
 ```console
-$ scp /usr/lib/twopence/twopence_test_server root@sut.example.com:.
+$ sudo virsh net-define isolated.xml
+$ sudo virsh net-autostart isolated
+$ sudo virsh net-start isolated
+```
+* (optional) Edit (using "virsh edit $guestname") the
+configuration of each guest that uses direct
+(macvtap) for its network connection and add a new
+<interface> in the <devices> section similar to
+the following:
+
+   <interface type='network'>
+     <source network='isolated'/>
+     <model type='virtio'/> <-- This line is
+optional.
+   </interface>
+
+* start the VM
+
+* (optional) set up the isolated network:
+
+```console
+$ set the ip e.g. ip addr add 192.168.254.2/24 dev
+ens10
+$ ip link set ens10 up
 ```
 
-instead of scp, you may use shared folders or whichever method you prefer
+* copy twopence into the VM (it is assumed you are running from the git project):
+
+```console
+$ rsync -avzp -e ssh . root@192.168.254.2:.
+```
+
+* inside the VM, install twopence, and be sure to have libssh-devel installed:
+
+```console
+$ sudo zypper install libssh-devel
+$ sudo make install
+```
 
 *  inside of the VM, run the server as root:
 
 ```console
-$ ./twopence_test_server
+$ twopence_test_server
 ```
 
 * in the directory `/usr/lib/twopence/`
